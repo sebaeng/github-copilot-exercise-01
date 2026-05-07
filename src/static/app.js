@@ -29,8 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
           participantsHTML = `
             <div class="participants-section">
               <strong>Participants:</strong>
-              <ul class="participants-list">
-                ${details.participants.map(p => `<li>${p}</li>`).join("")}
+              <ul class="participants-list" style="list-style: none; padding-left: 0;">
+                ${details.participants.map(p => `
+                  <li style="display: flex; align-items: center; margin-bottom: 3px;">
+                    <span style="flex:1;">${p}</span>
+                    <span class="delete-participant" data-activity="${name}" data-email="${p}" title="Remove" style="cursor:pointer;color:#c62828;font-weight:bold;margin-left:8px;">&#10006;</span>
+                  </li>
+                `).join("")}
               </ul>
             </div>
           `;
@@ -104,6 +109,27 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Event delegation per eliminare partecipante
+  activitiesList.addEventListener("click", async (event) => {
+    if (event.target.classList.contains("delete-participant")) {
+      const email = event.target.getAttribute("data-email");
+      const activity = event.target.getAttribute("data-activity");
+      if (confirm(`Remove ${email} from ${activity}?`)) {
+        try {
+          const response = await fetch(`/activities/${encodeURIComponent(activity)}/remove?email=${encodeURIComponent(email)}`, { method: "POST" });
+          const result = await response.json();
+          if (response.ok) {
+            fetchActivities();
+          } else {
+            alert(result.detail || "Error removing participant");
+          }
+        } catch (err) {
+          alert("Network error");
+        }
+      }
     }
   });
 
